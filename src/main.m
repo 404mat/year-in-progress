@@ -16,8 +16,10 @@ static double YearProgressFraction(NSDate *date, double *outDaysElapsed, double 
     if (fraction > 1) fraction = 1;
     // Show 100% for the final hour of the year
     if (total - elapsed <= 3600.0) fraction = 1.0;
-    *outDaysElapsed = elapsed / 86400.0;
-    *outDaysRemaining = (total - elapsed) / 86400.0;
+    double totalDays = [cal components:NSCalendarUnitDay fromDate:start toDate:end options:0].day;
+    double elapsedDays = [cal components:NSCalendarUnitDay fromDate:start toDate:date options:0].day;
+    *outDaysElapsed = elapsedDays + 1;      // today counts as elapsed
+    *outDaysRemaining = totalDays - (elapsedDays + 1); // whole days after today
     return fraction;
 }
 
