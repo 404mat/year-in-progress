@@ -1,21 +1,16 @@
 import AppKit
 
+func fractionElapsed(from start: Date, to end: Date, at date: Date) -> Double {
+    min(max(date.timeIntervalSince(start) / end.timeIntervalSince(start), 0), 1)
+}
+
 func yearProgressFraction(_ date: Date) -> (fraction: Double, daysElapsed: Double, daysRemaining: Double) {
     let cal = Calendar.current
-    let year = cal.component(.year, from: date)
-    var startC = DateComponents()
-    startC.year = year; startC.month = 1; startC.day = 1
-    var endC = DateComponents()
-    endC.year = year + 1; endC.month = 1; endC.day = 1
-    let start = cal.date(from: startC)!
-    let end = cal.date(from: endC)!
-    let total = end.timeIntervalSince(start)
-    let elapsed = date.timeIntervalSince(start)
-    var fraction = elapsed / total
-    if fraction < 0 { fraction = 0 }
-    if fraction > 1 { fraction = 1 }
+    let start = cal.dateInterval(of: .year, for: date)!.start
+    let end = cal.dateInterval(of: .year, for: cal.date(byAdding: DateComponents(year: 1), to: start)!)!.start
+    var fraction = fractionElapsed(from: start, to: end, at: date)
     // Show 100% for the final hour of the year
-    if total - elapsed <= 3600.0 { fraction = 1.0 }
+    if end.timeIntervalSince(date) <= 3600.0 { fraction = 1.0 }
     let totalDays = cal.dateComponents([.day], from: start, to: end).day!
     let elapsedDays = cal.dateComponents([.day], from: start, to: date).day!
     let daysElapsed = Double(elapsedDays + 1)          // today counts as elapsed
@@ -24,35 +19,13 @@ func yearProgressFraction(_ date: Date) -> (fraction: Double, daysElapsed: Doubl
 }
 
 func monthProgressFraction(_ date: Date) -> Double {
-    let cal = Calendar.current
-    let comps = cal.dateComponents([.year, .month], from: date)
-    var startC = DateComponents()
-    startC.year = comps.year!; startC.month = comps.month!; startC.day = 1
-    var endC = DateComponents()
-    endC.year = comps.year!; endC.month = comps.month! + 1; endC.day = 1
-    let start = cal.date(from: startC)!
-    let end = cal.date(from: endC)!
-    let total = end.timeIntervalSince(start)
-    let elapsed = date.timeIntervalSince(start)
-    var fraction = elapsed / total
-    if fraction < 0 { fraction = 0 }
-    if fraction > 1 { fraction = 1 }
-    return fraction
+    let interval = Calendar.current.dateInterval(of: .month, for: date)!
+    return fractionElapsed(from: interval.start, to: interval.end, at: date)
 }
 
 func dayProgressFraction(_ date: Date) -> Double {
-    let cal = Calendar.current
-    let comps = cal.dateComponents([.year, .month, .day], from: date)
-    let start = cal.date(from: comps)!
-    var oneDay = DateComponents()
-    oneDay.day = 1
-    let end = cal.date(byAdding: oneDay, to: start)!
-    let total = end.timeIntervalSince(start)
-    let elapsed = date.timeIntervalSince(start)
-    var fraction = elapsed / total
-    if fraction < 0 { fraction = 0 }
-    if fraction > 1 { fraction = 1 }
-    return fraction
+    let interval = Calendar.current.dateInterval(of: .day, for: date)!
+    return fractionElapsed(from: interval.start, to: interval.end, at: date)
 }
 
 func ringImage(_ progress: Double) -> NSImage {
@@ -219,12 +192,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc func update() {
-        let (fraction, daysElapsed, daysRemaining) = yearProgressFraction(Date())
+        let now = Date()
+        let (fraction, daysElapsed, daysRemaining) = yearProgressFraction(now)
 
         statusItem.button?.image = ringImage(fraction)
         statusItem.button?.title = String(format: "%.0f%%", floor(fraction * 100))
 
-        let now = Date()
         menuContent.yearProgress = fraction
         menuContent.monthProgress = monthProgressFraction(now)
         menuContent.dayProgress = dayProgressFraction(now)
