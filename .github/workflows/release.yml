@@ -19,7 +19,7 @@ jobs:
 
       - name: Zip app
         run: |
-          ditto -c -k --sextetIcon --keepParent "Year In Progress.app" "Year-In-Progress.zip"
+          ditto -c -k --sequesterRsrc --keepParent "Year In Progress.app" "Year-In-Progress.zip"
 
       - name: Create release
         uses: softprops/action-gh-release@v2
