@@ -84,9 +84,12 @@ static NSImage *RingImage(double progress) {
     return image;
 }
 
+@class MenuContentView;
+
 @interface AppDelegate : NSObject <NSApplicationDelegate, NSMenuDelegate>
 @property (strong) NSStatusItem *statusItem;
 @property (strong) NSTimer *timer;
+@property (strong) MenuContentView *menuContent;
 @end
 
 static const CGFloat BarSquareSize = 11.0;
@@ -206,6 +209,20 @@ static const CGFloat RowGap = 8.0;
     menu.autoenablesItems = NO;
     self.statusItem.menu = menu;
 
+    NSSize contentSize = [MenuContentView contentSize];
+    self.menuContent = [[MenuContentView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+
+    NSMenuItem *rowItem = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
+    rowItem.enabled = NO;
+    rowItem.view = self.menuContent;
+    [menu addItem:rowItem];
+
+    [menu addItem:[NSMenuItem separatorItem]];
+    NSMenuItem *quit = [[NSMenuItem alloc] initWithTitle:@"Quit"
+                                                  action:@selector(terminate:) keyEquivalent:@"q"];
+    quit.target = NSApp;
+    [menu addItem:quit];
+
     [self update];
 
     self.timer = [NSTimer timerWithTimeInterval:60.0
@@ -227,30 +244,12 @@ static const CGFloat RowGap = 8.0;
     self.statusItem.button.image = RingImage(fraction);
     self.statusItem.button.title = [NSString stringWithFormat:@"%.0f%%", floor(fraction * 100)];
 
-    NSMenu *menu = self.statusItem.menu;
-    [menu removeAllItems];
-
     NSDate *now = [NSDate date];
-    double monthFraction = MonthProgressFraction(now);
-    double dayFraction = DayProgressFraction(now);
-
-    NSSize contentSize = [MenuContentView contentSize];
-    MenuContentView *content = [[MenuContentView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
-    content.yearProgress = fraction;
-    content.monthProgress = monthFraction;
-    content.dayProgress = dayFraction;
-    content.daysText = [NSString stringWithFormat:@"%.0f days elapsed · %.0f days left", daysElapsed, daysRemaining];
-
-    NSMenuItem *rowItem = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
-    rowItem.enabled = NO;
-    rowItem.view = content;
-    [menu addItem:rowItem];
-
-    [menu addItem:[NSMenuItem separatorItem]];
-    NSMenuItem *quit = [[NSMenuItem alloc] initWithTitle:@"Quit"
-                                                  action:@selector(terminate:) keyEquivalent:@"q"];
-    quit.target = NSApp;
-    [menu addItem:quit];
+    self.menuContent.yearProgress = fraction;
+    self.menuContent.monthProgress = MonthProgressFraction(now);
+    self.menuContent.dayProgress = DayProgressFraction(now);
+    self.menuContent.daysText = [NSString stringWithFormat:@"%.0f days elapsed · %.0f days left", daysElapsed, daysRemaining];
+    [self.menuContent setNeedsDisplay:YES];
 }
 
 @end
