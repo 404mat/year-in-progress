@@ -25,8 +25,8 @@ publish a new release, push a tag: `git tag v0.1.0 && git push origin v0.1.0`.
 ## Troubleshooting
 
 **macOS says the app can't be verified.** The app is ad-hoc signed, so macOS
-may warn that it cannot verify the developer. To open it, right-click the app
-and choose **Open**, or run:
+may warn that it cannot verify the developer. Allow it under **System
+Settings → Privacy & Security** by clicking **Allow Anyway**, or run:
 
 ```sh
 xattr -cr "Year In Progress.app"
